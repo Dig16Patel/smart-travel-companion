@@ -1,0 +1,17 @@
+# Misc
+.idea/
+.vscode/
+.DS_Store
+
+# Frontend
+frontend/build/
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.env
+
+# Backend
+backend/node_modules/
+backend/venv/
+backend/.env
+backend/serviceAccountKey.json

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "281038273901",
+    "project_id": "travel-guide-app-eeb1c",
+    "storage_bucket": "travel-guide-app-eeb1c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:281038273901:android:99d92f3329e973e86a6e64",
+        "android_client_info": {
+          "package_name": "com.antigravity.travel_guide"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "281038273901-u6vsfglk0qpbtecq4gsm1vsvj5tgoh3i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkoj8oLyYa62usIWKtqBVN3nE58kXrbN0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "281038273901-u6vsfglk0qpbtecq4gsm1vsvj5tgoh3i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
