@@ -61,10 +61,13 @@ class TravelTimelineItem extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            title,
-                            style: Theme.of(context).textTheme.titleMedium,
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Text(
                             duration,
                             style: TextStyle(
@@ -85,13 +88,16 @@ class TravelTimelineItem extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            "Est. Fare: $fare",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.tertiary,
+                          Expanded(
+                            child: Text(
+                              "Est. Fare: $fare",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.tertiary,
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 8),
                           ElevatedButton(
                             onPressed: () {},
                             style: ElevatedButton.styleFrom(

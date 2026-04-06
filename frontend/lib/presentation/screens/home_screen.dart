@@ -176,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 _buildHomeButton(
                   context,
-                  'Travel\nHistory',
+                  'Smart\nTravel',
                   Icons.history_rounded,
                   '/history',
                   Colors.teal,

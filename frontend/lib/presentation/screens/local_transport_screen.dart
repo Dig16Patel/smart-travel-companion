@@ -858,6 +858,37 @@ class _BusStopsTabState extends State<_BusStopsTab>
     WidgetsBinding.instance.addPostFrameCallback((_) => _fetchBusStops());
   }
 
+  /// Resolves the best human-readable ASCII name from OSM tags.
+  /// ALL non-ASCII characters are stripped so Gujarati/Devanagari never
+  /// render as ### boxes.
+  static String _resolveStopName(Map<String, dynamic> t) {
+    // Keep only printable ASCII: space (0x20) through tilde (0x7E).
+    // Using literal space and ~ so the range is unambiguous in Dart's regex.
+    final _nonAscii = RegExp(r'[^ -~]', unicode: true);
+    String clean(String s) => s.replaceAll(_nonAscii, '').trim();
+
+    // Check each candidate in priority order
+    for (final key in ['name:en', 'name', 'loc_name', 'alt_name', 'short_name']) {
+      final raw = (t[key] as String?)?.trim() ?? '';
+      if (raw.isEmpty) continue;
+      final c = clean(raw);
+      if (c.isNotEmpty) return c; // return the clean ASCII portion
+    }
+
+    // Reference number fallback
+    final ref = clean((t['ref'] as String?) ?? '');
+    if (ref.isNotEmpty) return 'Stop $ref';
+
+    // Operator / network fallback
+    final op = clean((t['operator'] as String?) ?? '');
+    if (op.isNotEmpty) return '$op Stop';
+
+    final net = clean((t['network'] as String?) ?? '');
+    if (net.isNotEmpty) return '$net Bus Stop';
+
+    return 'Bus Stop';
+  }
+
   Future<void> _fetchBusStops() async {
     if (!mounted) return;
     setState(() {
@@ -918,15 +949,18 @@ class _BusStopsTabState extends State<_BusStopsTab>
 
           final distMeters = Geolocator.distanceBetween(
               lat, lng, stLat, stLng);
-          final name = tags['name'] ??
-              tags['ref'] ??
-              tags['operator'] ??
-              'Bus Stop';
+
+          final name = _resolveStopName(tags);
+
           final type = tags['amenity'] == 'bus_station'
               ? 'Bus Station'
-              : tags['public_transport'] == 'platform'
-                  ? 'Platform'
-                  : 'Bus Stop';
+              : tags['highway'] == 'bus_stop'
+                  ? 'Bus Stop'
+                  : tags['public_transport'] == 'platform'
+                      ? 'Platform'
+                      : tags['public_transport'] == 'stop_position'
+                          ? 'Stop Position'
+                          : 'Bus Stop';
 
           stops.add({
             'name': name,
@@ -937,16 +971,26 @@ class _BusStopsTabState extends State<_BusStopsTab>
                 ? '${distMeters.toStringAsFixed(0)} m'
                 : '${(distMeters / 1000).toStringAsFixed(1)} km',
             'type': type,
+            'tags': tags,
           });
         }
 
         stops.sort(
             (a, b) => (a['distance'] as double).compareTo(b['distance'] as double));
-        final top20 = stops.take(20).toList();
+        // Remove duplicates by proximity (within 15 m = same stop)
+        final deduped = <Map<String, dynamic>>[];
+        for (final stop in stops) {
+          final isDuplicate = deduped.any((s) {
+            final dLat = (s['lat'] as double) - (stop['lat'] as double);
+            final dLng = (s['lng'] as double) - (stop['lng'] as double);
+            return (dLat * dLat + dLng * dLng) < 0.0000002; // ~15 m
+          });
+          if (!isDuplicate) deduped.add(stop);
+        }
 
         if (mounted) {
           setState(() {
-            _busStops = top20;
+            _busStops = deduped; // show ALL stops in range, deduplicated
             _isLoading = false;
           });
           if (_mapReady) {
@@ -1025,8 +1069,8 @@ class _BusStopsTabState extends State<_BusStopsTab>
               Expanded(
                 child: Text(
                   _busStops.isEmpty
-                      ? 'No stops found within $_radiusKm km'
-                      : '${_busStops.length} stops found within $_radiusKm km',
+                      ? 'No stops found within $_radiusKm km — try a larger radius'
+                      : '${_busStops.length} bus stops found within $_radiusKm km',
                   style: const TextStyle(
                       fontSize: 12,
                       color: Colors.blue,
@@ -1041,12 +1085,14 @@ class _BusStopsTabState extends State<_BusStopsTab>
                   setState(() => _radiusKm = km);
                   _fetchBusStops();
                 },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 2,  child: Text('2 km radius')),
-                  PopupMenuItem(value: 5,  child: Text('5 km radius')),
-                  PopupMenuItem(value: 10, child: Text('10 km radius ✓')),
-                  PopupMenuItem(value: 25, child: Text('25 km radius')),
-                  PopupMenuItem(value: 50, child: Text('50 km radius')),
+                itemBuilder: (_) => [
+                  for (final km in [2, 5, 10, 25, 50])
+                    PopupMenuItem(
+                      value: km,
+                      child: Text(
+                        '$km km radius${_radiusKm == km ? ' ✓' : ''}',
+                      ),
+                    ),
                 ],
               ),
               IconButton(
@@ -1172,7 +1218,16 @@ class _BusStopsTabState extends State<_BusStopsTab>
                               fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                         subtitle: Text(
-                          '${stop['type']}  •  ${stop['distanceText']}',
+                          () {
+                            final name = stop['name'] as String;
+                            final type = stop['type'] as String;
+                            final dist = stop['distanceText'] as String;
+                            // Avoid showing "Bus Stop • Bus Stop"
+                            if (name == type || name == 'Bus Stop') {
+                              return dist;
+                            }
+                            return '$type  •  $dist';
+                          }(),
                           style: const TextStyle(fontSize: 11),
                         ),
                         trailing: IconButton(
