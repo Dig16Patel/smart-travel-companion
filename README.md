@@ -23,3 +23,20 @@ A comprehensive travel guide application with multimodal transport options.
     ```bash
     flutter run
     ```
+
+### Backend (Node.js/Express)
+
+1.  Navigate to the `backend` directory:
+    ```bash
+    cd backend
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Set up environment variables (create a `.env` file and configure Firebase, etc.).
+4.  Run the server in development mode:
+    ```bash
+    npm run dev
+    ```
+    *(Or use `npm start` for standard run)*
